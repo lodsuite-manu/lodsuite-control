@@ -119,6 +119,19 @@ class RenderTaskResponse(BaseModel):
     character_key: str
 
 
+class ScriptUploadRequest(BaseModel):
+    """Request schema for uploading a script."""
+
+    script_yaml: str
+
+
+class ScriptUploadResponse(BaseModel):
+    """Response schema for script upload."""
+
+    job: "JobResponse"
+    warnings: list[str] = Field(default_factory=list)
+
+
 class HealthResponse(BaseModel):
     """Response schema for health check."""
 

@@ -12,14 +12,14 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
             background: #0f0f0f;
             color: #e0e0e0;
             min-height: 100vh;
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -68,6 +68,7 @@
             background: #0f0f0f;
             color: #e0e0e0;
             font-size: 14px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             resize: vertical;
         }
 
@@ -78,6 +79,12 @@
 
         textarea {
             min-height: 120px;
+        }
+
+        textarea.yaml-editor {
+            min-height: 400px;
+            line-height: 1.5;
+            tab-size: 2;
         }
 
         .btn {
@@ -131,6 +138,7 @@
             display: flex;
             gap: 10px;
             margin-top: 16px;
+            flex-wrap: wrap;
         }
 
         .job-list {
@@ -278,6 +286,7 @@
             cursor: pointer;
             border-bottom: 2px solid transparent;
             transition: all 0.2s;
+            font-size: 14px;
         }
 
         .tab:hover {
@@ -312,6 +321,88 @@
             color: #e0e0e0;
         }
 
+        .library-ref {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .library-section h3 {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .library-section ul {
+            list-style: none;
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .library-section li {
+            padding: 4px 0;
+            cursor: pointer;
+        }
+
+        .library-section li:hover {
+            color: #3b82f6;
+        }
+
+        .library-section code {
+            background: #0f0f0f;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .warnings {
+            background: #3a2a1a;
+            border: 1px solid #fb923c;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 16px;
+        }
+
+        .warnings h4 {
+            color: #fb923c;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .warnings ul {
+            margin-left: 16px;
+            font-size: 13px;
+            color: #fbbf24;
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .mode-btn {
+            padding: 8px 16px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #888;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .mode-btn.active {
+            background: #2a3a4a;
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .mode-btn:hover {
+            border-color: #555;
+        }
+
         @media (max-width: 600px) {
             .container {
                 padding: 12px;
@@ -326,33 +417,64 @@
                 align-items: flex-start;
                 gap: 10px;
             }
+
+            .library-ref {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🎬 Lodsuite</h1>
+            <h1>Lodsuite</h1>
             <span class="status-badge" id="api-status">Connecting...</span>
         </header>
 
         <div class="tabs">
             <button class="tab active" data-tab="create">Neuer Job</button>
-            <button class="tab" data-tab="jobs">Meine Jobs</button>
+            <button class="tab" data-tab="jobs">Jobs</button>
+            <button class="tab" data-tab="library">Library</button>
         </div>
 
         <!-- Create Job Tab -->
         <div id="tab-create" class="tab-content">
             <div class="card">
-                <h2>📝 Briefing</h2>
-                <textarea id="briefing" placeholder="Beschreibe dein Video-Projekt...
+                <h2>Script eingeben</h2>
 
-Beispiel: Software für Maschinenwartung. Zielgruppe: KMU-Geschäftsführer in der DACH-Region. Kernbotschaft: Digitalisierung ist kein Luxus mehr - es ist Überleben."></textarea>
-                <div class="btn-group">
-                    <button class="btn btn-primary" id="create-btn" onclick="createJob()">
-                        🚀 Job erstellen & Script generieren
-                    </button>
+                <div class="mode-toggle">
+                    <button class="mode-btn active" data-mode="yaml" onclick="setMode('yaml')">YAML Script</button>
+                    <button class="mode-btn" data-mode="brief" onclick="setMode('brief')">AI Briefing</button>
                 </div>
+
+                <!-- YAML Mode -->
+                <div id="mode-yaml">
+                    <textarea id="script-yaml" class="yaml-editor" placeholder="# YAML Script hier einfuegen..."></textarea>
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="loadTemplate()">Template laden</button>
+                        <button class="btn btn-primary" id="upload-btn" onclick="uploadScript()">
+                            Script hochladen & Job erstellen
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Brief Mode -->
+                <div id="mode-brief" class="hidden">
+                    <textarea id="briefing" placeholder="Beschreibe dein Video-Projekt...
+
+Beispiel: Software fuer Maschinenwartung. Zielgruppe: KMU-Geschaeftsfuehrer in der DACH-Region. Kernbotschaft: Digitalisierung ist kein Luxus mehr - es ist Ueberleben."></textarea>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" id="create-btn" onclick="createJob()">
+                            Job erstellen & Script generieren (Mock)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warnings display -->
+            <div id="upload-warnings" class="warnings hidden">
+                <h4>Warnungen</h4>
+                <ul id="warnings-list"></ul>
             </div>
         </div>
 
@@ -360,8 +482,8 @@ Beispiel: Software für Maschinenwartung. Zielgruppe: KMU-Geschäftsführer in d
         <div id="tab-jobs" class="tab-content hidden">
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h2>📋 Jobs</h2>
-                    <button class="refresh-btn" onclick="loadJobs()">🔄</button>
+                    <h2>Jobs</h2>
+                    <button class="refresh-btn" onclick="loadJobs()">Refresh</button>
                 </div>
                 <div id="jobs-list" class="job-list">
                     <div class="empty-state">Keine Jobs vorhanden</div>
@@ -374,12 +496,64 @@ Beispiel: Software für Maschinenwartung. Zielgruppe: KMU-Geschäftsführer in d
                 <div id="detail-content"></div>
             </div>
         </div>
+
+        <!-- Library Tab -->
+        <div id="tab-library" class="tab-content hidden">
+            <div class="card">
+                <h2>Asset Library Reference</h2>
+                <p style="color: #888; margin-bottom: 16px;">Verwende diese Keys in deinem YAML Script:</p>
+                <div class="library-ref" id="library-content">
+                    <div class="empty-state">Laden...</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
         const API_BASE = '';
         let currentJobId = null;
         let pollInterval = null;
+        let library = null;
+
+        const TEMPLATE = `title: "Mein Video Ad"
+aspect_ratio: "9:16"
+character: "markus_industrial"
+
+scenes:
+  - order: 1
+    duration: 5
+    location: warehouse_modern
+    camera: selfie_pov_arm_visible
+    action: talking_to_camera_confident
+    voiceover: "POV: Du leitest 2026 ein mittelstaendisches Unternehmen..."
+    lipsync: true
+    caption: "POV: Industrie 2026"
+    caption_position: top
+
+  - order: 2
+    duration: 6
+    location: office_glass_wall
+    camera: medium_shot
+    action: pointing_at_screen
+    voiceover: "Waehrend deine Konkurrenz noch Excel-Listen pflegt, hast du laengst automatisiert."
+    lipsync: true
+
+  - order: 3
+    duration: 5
+    location: cnc_hall
+    camera: walking_shot
+    action: walking_explaining
+    voiceover: "Jeder Prozess optimiert. Jede Maschine vernetzt."
+    lipsync: true
+
+  - order: 4
+    duration: 4
+    location: factory_floor
+    camera: dynamic_handheld
+    action: touring
+    voiceover: "Das ist keine Zukunftsmusik. Das ist heute."
+    lipsync: true
+`;
 
         // Tab switching
         document.querySelectorAll('.tab').forEach(tab => {
@@ -391,9 +565,25 @@ Beispiel: Software für Maschinenwartung. Zielgruppe: KMU-Geschäftsführer in d
 
                 if (tab.dataset.tab === 'jobs') {
                     loadJobs();
+                } else if (tab.dataset.tab === 'library') {
+                    loadLibrary();
                 }
             });
         });
+
+        // Mode switching
+        function setMode(mode) {
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+            document.getElementById('mode-yaml').classList.toggle('hidden', mode !== 'yaml');
+            document.getElementById('mode-brief').classList.toggle('hidden', mode !== 'brief');
+        }
+
+        // Load template
+        function loadTemplate() {
+            document.getElementById('script-yaml').value = TEMPLATE;
+        }
 
         // Check API status
         async function checkApi() {
@@ -401,18 +591,129 @@ Beispiel: Software für Maschinenwartung. Zielgruppe: KMU-Geschäftsführer in d
                 const res = await fetch('/health');
                 const data = await res.json();
                 const badge = document.getElementById('api-status');
-                badge.textContent = '✓ Online';
+                badge.textContent = 'Online';
                 badge.style.background = '#1a3d1a';
                 badge.style.color = '#4ade80';
             } catch (e) {
                 const badge = document.getElementById('api-status');
-                badge.textContent = '✗ Offline';
+                badge.textContent = 'Offline';
                 badge.style.background = '#3d1a1a';
                 badge.style.color = '#f87171';
             }
         }
 
-        // Create job
+        // Load library
+        async function loadLibrary() {
+            if (library) {
+                renderLibrary();
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/v1/library');
+                library = await res.json();
+                renderLibrary();
+            } catch (e) {
+                document.getElementById('library-content').innerHTML = '<p style="color: #f87171;">Fehler beim Laden</p>';
+            }
+        }
+
+        function renderLibrary() {
+            const content = document.getElementById('library-content');
+            content.innerHTML = `
+                <div class="library-section">
+                    <h3>Locations</h3>
+                    <ul>
+                        ${Object.keys(library.locations).map(k => `<li><code>${k}</code></li>`).join('')}
+                    </ul>
+                </div>
+                <div class="library-section">
+                    <h3>Cameras</h3>
+                    <ul>
+                        ${Object.keys(library.cameras).map(k => `<li><code>${k}</code></li>`).join('')}
+                    </ul>
+                </div>
+                <div class="library-section">
+                    <h3>Actions</h3>
+                    <ul>
+                        ${Object.keys(library.actions).map(k =>
+                            `<li><code>${k}</code> ${library.actions[k].needs_lipsync ? '(lipsync)' : ''}</li>`
+                        ).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
+        // Upload YAML script
+        async function uploadScript() {
+            const yaml = document.getElementById('script-yaml').value.trim();
+            if (!yaml) {
+                alert('Bitte YAML Script eingeben');
+                return;
+            }
+
+            const btn = document.getElementById('upload-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span>Erstelle Job...';
+            document.getElementById('upload-warnings').classList.add('hidden');
+
+            try {
+                // Create job first
+                const createRes = await fetch('/api/v1/jobs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        telegram_user_id: 0,
+                        telegram_chat_id: 0,
+                        briefing: 'YAML Upload',
+                        mode: 'file'
+                    })
+                });
+
+                if (!createRes.ok) {
+                    const err = await createRes.json();
+                    throw new Error(err.detail || 'Job creation failed');
+                }
+
+                const job = await createRes.json();
+
+                // Upload script
+                btn.innerHTML = '<span class="loading"></span>Lade Script...';
+                const uploadRes = await fetch(`/api/v1/jobs/${job.id}/script/upload`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ script_yaml: yaml })
+                });
+
+                if (!uploadRes.ok) {
+                    const err = await uploadRes.json();
+                    throw new Error(err.detail || 'Script upload failed');
+                }
+
+                const result = await uploadRes.json();
+
+                // Show warnings if any
+                if (result.warnings && result.warnings.length > 0) {
+                    const warningsList = document.getElementById('warnings-list');
+                    warningsList.innerHTML = result.warnings.map(w => `<li>${w}</li>`).join('');
+                    document.getElementById('upload-warnings').classList.remove('hidden');
+                }
+
+                // Switch to jobs tab
+                document.querySelector('[data-tab="jobs"]').click();
+                currentJobId = job.id;
+                await loadJobs();
+                showJobDetail(job.id);
+
+            } catch (e) {
+                alert('Fehler: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Script hochladen & Job erstellen';
+            }
+        }
+
+        // Create job with briefing (AI mode)
         async function createJob() {
             const briefing = document.getElementById('briefing').value.trim();
             if (!briefing) {
@@ -453,7 +754,7 @@ Beispiel: Software für Maschinenwartung. Zielgruppe: KMU-Geschäftsführer in d
                 alert('Fehler: ' + e.message);
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '🚀 Job erstellen & Script generieren';
+                btn.innerHTML = 'Job erstellen & Script generieren (Mock)';
             }
         }
 
@@ -474,7 +775,7 @@ Beispiel: Software für Maschinenwartung. Zielgruppe: KMU-Geschäftsführer in d
                     <div class="job-item ${job.id === currentJobId ? 'selected' : ''}" onclick="showJobDetail('${job.id}')">
                         <div class="job-info">
                             <div class="job-title">${job.title || 'Unbenannt'}</div>
-                            <div class="job-meta">${job.id.slice(0, 8)} · ${new Date(job.created_at).toLocaleString('de-DE')}</div>
+                            <div class="job-meta">${job.id.slice(0, 8)} | ${new Date(job.created_at).toLocaleString('de-DE')}</div>
                         </div>
                         <span class="job-status status-${job.status}">${formatStatus(job.status)}</span>
                     </div>
@@ -506,7 +807,7 @@ Beispiel: Software für Maschinenwartung. Zielgruppe: KMU-Geschäftsführer in d
 
                 let html = `
                     <p><strong>Status:</strong> <span class="job-status status-${job.status}">${formatStatus(job.status)}</span></p>
-                    <p><strong>Dauer:</strong> ${job.total_duration_sec}s · ${job.scenes.length} Szenen</p>
+                    <p><strong>Dauer:</strong> ${job.total_duration_sec}s | ${job.scenes.length} Szenen | ${job.character_key}</p>
                 `;
 
                 if (job.scenes.length > 0) {
@@ -519,12 +820,10 @@ Beispiel: Software für Maschinenwartung. Zielgruppe: KMU-Geschäftsführer in d
                                     <span class="scene-duration">${scene.duration_sec}s</span>
                                 </div>
                                 <div class="scene-details">
-                                    📍 ${scene.location_key.replace(/_/g, ' ')} ·
-                                    📷 ${scene.camera_key.replace(/_/g, ' ')} ·
-                                    🎬 ${scene.action_key.replace(/_/g, ' ')}
-                                    ${scene.needs_lipsync ? ' · 👄 Lipsync' : ''}
+                                    ${scene.location_key} | ${scene.camera_key} | ${scene.action_key}
+                                    ${scene.needs_lipsync ? ' | lipsync' : ''}
                                 </div>
-                                ${scene.voiceover_de ? `<div class="scene-voiceover">🎙 "${scene.voiceover_de}"</div>` : ''}
+                                ${scene.voiceover_de ? `<div class="scene-voiceover">"${scene.voiceover_de}"</div>` : ''}
                             </div>
                         `;
                     });
@@ -536,17 +835,18 @@ Beispiel: Software für Maschinenwartung. Zielgruppe: KMU-Geschäftsführer in d
 
                 if (job.status === 'script_pending_review') {
                     html += `
-                        <button class="btn btn-success" onclick="approveScript('${job.id}')">✅ Script freigeben</button>
-                        <button class="btn btn-secondary" onclick="regenerateScript('${job.id}')">🔄 Neu generieren</button>
+                        <button class="btn btn-success" onclick="approveScript('${job.id}')">Script freigeben</button>
+                        <button class="btn btn-secondary" onclick="downloadYaml('${job.id}')">YAML exportieren</button>
+                        <button class="btn btn-secondary" onclick="regenerateScript('${job.id}')">Neu generieren</button>
                     `;
                 } else if (job.status === 'final_pending_review') {
                     html += `
-                        <button class="btn btn-success" onclick="approveFinal('${job.id}')">✅ Video freigeben</button>
-                        <a href="/api/v1/jobs/${job.id}/final.mp4" class="btn btn-primary" download>⬇️ Download</a>
+                        <button class="btn btn-success" onclick="approveFinal('${job.id}')">Video freigeben</button>
+                        <a href="/api/v1/jobs/${job.id}/final.mp4" class="btn btn-primary" download>Download</a>
                     `;
                 } else if (job.status === 'completed') {
                     html += `
-                        <a href="/api/v1/jobs/${job.id}/final.mp4" class="btn btn-primary" download>⬇️ Video herunterladen</a>
+                        <a href="/api/v1/jobs/${job.id}/final.mp4" class="btn btn-primary" download>Video herunterladen</a>
                     `;
                 } else if (['video_rendering', 'audio_rendering', 'lipsync_running', 'assembly_running', 'script_approved'].includes(job.status)) {
                     html += `<button class="btn btn-secondary" disabled><span class="loading"></span>Rendering...</button>`;
@@ -554,7 +854,7 @@ Beispiel: Software für Maschinenwartung. Zielgruppe: KMU-Geschäftsführer in d
                 }
 
                 if (!['completed', 'cancelled', 'failed'].includes(job.status)) {
-                    html += `<button class="btn btn-danger" onclick="cancelJob('${job.id}')">❌ Abbrechen</button>`;
+                    html += `<button class="btn btn-danger" onclick="cancelJob('${job.id}')">Abbrechen</button>`;
                 }
 
                 html += '</div>';
@@ -571,6 +871,24 @@ Beispiel: Software für Maschinenwartung. Zielgruppe: KMU-Geschäftsführer in d
                 content.innerHTML = html;
             } catch (e) {
                 content.innerHTML = '<p style="color: #f87171;">Fehler beim Laden</p>';
+            }
+        }
+
+        // Download YAML
+        async function downloadYaml(jobId) {
+            try {
+                const res = await fetch(`/api/v1/jobs/${jobId}/script/yaml`);
+                const data = await res.json();
+
+                const blob = new Blob([data.yaml], { type: 'text/yaml' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `script-${jobId.slice(0, 8)}.yaml`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                alert('Fehler: ' + e.message);
             }
         }
 
@@ -654,19 +972,19 @@ Beispiel: Software für Maschinenwartung. Zielgruppe: KMU-Geschäftsführer in d
         // Format status
         function formatStatus(status) {
             const map = {
-                'briefing_received': '📝 Briefing',
-                'script_generating': '🤖 Generiert...',
-                'script_pending_review': '📋 Review',
-                'script_approved': '✅ Genehmigt',
-                'stills_selecting': '🖼️ Stills...',
-                'video_rendering': '🎬 Rendering...',
-                'audio_rendering': '🎙️ Audio...',
-                'lipsync_running': '👄 Lipsync...',
-                'assembly_running': '🔧 Assembly...',
-                'final_pending_review': '👀 Final Review',
-                'completed': '🎉 Fertig',
-                'failed': '❌ Fehler',
-                'cancelled': '🚫 Abgebrochen'
+                'briefing_received': 'Briefing',
+                'script_generating': 'Generiert...',
+                'script_pending_review': 'Review',
+                'script_approved': 'Genehmigt',
+                'stills_selecting': 'Stills...',
+                'video_rendering': 'Rendering...',
+                'audio_rendering': 'Audio...',
+                'lipsync_running': 'Lipsync...',
+                'assembly_running': 'Assembly...',
+                'final_pending_review': 'Final Review',
+                'completed': 'Fertig',
+                'failed': 'Fehler',
+                'cancelled': 'Abgebrochen'
             };
             return map[status] || status;
         }

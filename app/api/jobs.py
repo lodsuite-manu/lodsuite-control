@@ -12,10 +12,10 @@ from app.config import get_settings
 from app.db import crud
 from app.db.database import get_session
 from app.db.models import JobStatus, SceneStatus
-from app.schemas.job import JobCreateRequest, JobListResponse, JobResponse
+from app.schemas.job import JobCreateRequest, JobListResponse, JobResponse, ScriptUploadRequest, ScriptUploadResponse
 from app.schemas.script import Script, ScriptGenerationRequest
 from app.services.script_generator import generate_script
-from app.services.script_parser import format_script_for_display
+from app.services.script_parser import format_script_for_display, parse_yaml_script, validate_script, script_to_yaml, ScriptParseError
 from app.services.state_machine import can_transition, validate_transition
 
 logger = structlog.get_logger()
@@ -249,6 +249,137 @@ async def regenerate_script(
 
     # Re-generate
     return await generate_job_script(job_id, session)
+
+
+@router.post("/{job_id}/script/upload", response_model=ScriptUploadResponse)
+async def upload_script(
+    job_id: str,
+    request: ScriptUploadRequest,
+    session: AsyncSession = Depends(get_session),
+) -> ScriptUploadResponse:
+    """Upload a YAML script directly."""
+    job = await crud.get_job(session, job_id)
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Job not found: {job_id}",
+        )
+
+    # Check if job is in a state that allows script upload
+    current_status = JobStatus(job.status)
+    if current_status not in [JobStatus.BRIEFING_RECEIVED, JobStatus.SCRIPT_PENDING_REVIEW]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot upload script in state: {job.status}",
+        )
+
+    # Parse the YAML script
+    try:
+        script = parse_yaml_script(request.script_yaml)
+    except ScriptParseError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+    # Validate and collect warnings
+    warnings = validate_script(script)
+
+    # Delete existing scenes if any
+    for scene in job.scenes:
+        await session.delete(scene)
+    await session.flush()
+
+    # Create scenes from script
+    for scene_script in script.scenes:
+        await crud.create_scene(
+            session=session,
+            job_id=job_id,
+            order=scene_script.order,
+            duration_sec=scene_script.duration_sec,
+            location_key=scene_script.location_key,
+            location_prompt=scene_script.location_prompt,
+            camera_key=scene_script.camera_key,
+            action_key=scene_script.action_key,
+            voiceover_de=scene_script.voiceover_de,
+            needs_lipsync=scene_script.needs_lipsync,
+            caption_overlay=scene_script.caption_overlay,
+            caption_position=scene_script.caption_position,
+        )
+
+    # Update job with script details
+    await crud.update_job(
+        session,
+        job_id,
+        title=script.title,
+        total_duration_sec=script.total_duration_sec,
+        character_key=script.character_key,
+        status=JobStatus.SCRIPT_PENDING_REVIEW.value,
+    )
+
+    logger.info(
+        "Script uploaded",
+        job_id=job_id,
+        title=script.title,
+        scenes=len(script.scenes),
+        warnings=len(warnings),
+    )
+
+    # Refresh job
+    job = await crud.get_job(session, job_id)
+    return ScriptUploadResponse(
+        job=JobResponse.model_validate(job),
+        warnings=warnings,
+    )
+
+
+@router.get("/{job_id}/script/yaml")
+async def get_script_yaml(
+    job_id: str,
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """Get the current script as YAML."""
+    job = await crud.get_job(session, job_id)
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Job not found: {job_id}",
+        )
+
+    if not job.scenes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Job has no script yet",
+        )
+
+    # Build Script object from job
+    from app.schemas.script import SceneScript, Script
+
+    scenes = [
+        SceneScript(
+            order=s.order,
+            duration_sec=s.duration_sec,
+            location_key=s.location_key,
+            location_prompt=s.location_prompt,
+            camera_key=s.camera_key,
+            action_key=s.action_key,
+            voiceover_de=s.voiceover_de,
+            needs_lipsync=s.needs_lipsync,
+            caption_overlay=s.caption_overlay,
+            caption_position=s.caption_position,
+        )
+        for s in sorted(job.scenes, key=lambda x: x.order)
+    ]
+
+    script = Script(
+        title=job.title or "Untitled",
+        aspect_ratio=job.aspect_ratio,
+        character_key=job.character_key,
+        scenes=scenes,
+    )
+
+    yaml_content = script_to_yaml(script)
+    return {"yaml": yaml_content}
 
 
 @router.post("/{job_id}/final/approve", response_model=JobResponse)
