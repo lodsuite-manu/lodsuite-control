@@ -2,11 +2,14 @@
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncGenerator
 
 import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from app.api.router import api_router
 from app.config import get_settings
@@ -91,6 +94,15 @@ def create_app() -> FastAPI:
 
     # Include API router
     app.include_router(api_router)
+
+    # Serve static files
+    static_dir = Path(__file__).parent / "static"
+    if static_dir.exists():
+        app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+        @app.get("/")
+        async def index():
+            return FileResponse(static_dir / "index.html")
 
     return app
 

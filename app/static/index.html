@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lodsuite - UGC Ad Pipeline</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #333;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            background: #1a3d1a;
+            color: #4ade80;
+        }
+
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: #fff;
+        }
+
+        textarea, input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background: #0f0f0f;
+            color: #e0e0e0;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        textarea:focus, input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        textarea {
+            min-height: 120px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-success {
+            background: #22c55e;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #16a34a;
+        }
+
+        .btn-secondary {
+            background: #333;
+            color: #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: #444;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .job-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .job-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .job-item:hover {
+            border-color: #3b82f6;
+        }
+
+        .job-item.selected {
+            border-color: #3b82f6;
+            background: #1a2a3a;
+        }
+
+        .job-info {
+            flex: 1;
+        }
+
+        .job-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .job-meta {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .job-status {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-briefing_received { background: #1a1a3a; color: #818cf8; }
+        .status-script_generating { background: #1a2a3a; color: #38bdf8; }
+        .status-script_pending_review { background: #3a2a1a; color: #fb923c; }
+        .status-script_approved { background: #1a3a2a; color: #4ade80; }
+        .status-video_rendering { background: #1a2a3a; color: #38bdf8; }
+        .status-audio_rendering { background: #1a2a3a; color: #38bdf8; }
+        .status-lipsync_running { background: #1a2a3a; color: #38bdf8; }
+        .status-assembly_running { background: #1a2a3a; color: #38bdf8; }
+        .status-final_pending_review { background: #3a2a1a; color: #fb923c; }
+        .status-completed { background: #1a3a1a; color: #4ade80; }
+        .status-failed { background: #3a1a1a; color: #f87171; }
+        .status-cancelled { background: #2a2a2a; color: #888; }
+
+        .scene-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .scene-item {
+            padding: 16px;
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 8px;
+        }
+
+        .scene-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .scene-num {
+            font-weight: 600;
+            color: #3b82f6;
+        }
+
+        .scene-duration {
+            color: #888;
+            font-size: 12px;
+        }
+
+        .scene-details {
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+
+        .scene-voiceover {
+            font-style: italic;
+            color: #e0e0e0;
+            padding: 8px;
+            background: #1a1a1a;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #333;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: #e0e0e0;
+        }
+
+        .tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+
+        .video-preview {
+            margin-top: 16px;
+        }
+
+        .video-preview video {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 8px;
+        }
+
+        .refresh-btn {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            padding: 8px;
+            font-size: 18px;
+        }
+
+        .refresh-btn:hover {
+            color: #e0e0e0;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 12px;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .job-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎬 Lodsuite</h1>
+            <span class="status-badge" id="api-status">Connecting...</span>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="create">Neuer Job</button>
+            <button class="tab" data-tab="jobs">Meine Jobs</button>
+        </div>
+
+        <!-- Create Job Tab -->
+        <div id="tab-create" class="tab-content">
+            <div class="card">
+                <h2>📝 Briefing</h2>
+                <textarea id="briefing" placeholder="Beschreibe dein Video-Projekt...
+
+Beispiel: Software für Maschinenwartung. Zielgruppe: KMU-Geschäftsführer in der DACH-Region. Kernbotschaft: Digitalisierung ist kein Luxus mehr - es ist Überleben."></textarea>
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="create-btn" onclick="createJob()">
+                        🚀 Job erstellen & Script generieren
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Jobs List Tab -->
+        <div id="tab-jobs" class="tab-content hidden">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2>📋 Jobs</h2>
+                    <button class="refresh-btn" onclick="loadJobs()">🔄</button>
+                </div>
+                <div id="jobs-list" class="job-list">
+                    <div class="empty-state">Keine Jobs vorhanden</div>
+                </div>
+            </div>
+
+            <!-- Job Detail -->
+            <div id="job-detail" class="card hidden">
+                <h2 id="detail-title">Job Details</h2>
+                <div id="detail-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let currentJobId = null;
+        let pollInterval = null;
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                tab.classList.add('active');
+                document.getElementById('tab-' + tab.dataset.tab).classList.remove('hidden');
+
+                if (tab.dataset.tab === 'jobs') {
+                    loadJobs();
+                }
+            });
+        });
+
+        // Check API status
+        async function checkApi() {
+            try {
+                const res = await fetch('/health');
+                const data = await res.json();
+                const badge = document.getElementById('api-status');
+                badge.textContent = '✓ Online';
+                badge.style.background = '#1a3d1a';
+                badge.style.color = '#4ade80';
+            } catch (e) {
+                const badge = document.getElementById('api-status');
+                badge.textContent = '✗ Offline';
+                badge.style.background = '#3d1a1a';
+                badge.style.color = '#f87171';
+            }
+        }
+
+        // Create job
+        async function createJob() {
+            const briefing = document.getElementById('briefing').value.trim();
+            if (!briefing) {
+                alert('Bitte Briefing eingeben');
+                return;
+            }
+
+            const btn = document.getElementById('create-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span>Erstelle Job...';
+
+            try {
+                // Create job
+                const res = await fetch('/api/v1/jobs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        telegram_user_id: 0,
+                        telegram_chat_id: 0,
+                        briefing: briefing,
+                        mode: 'brief'
+                    })
+                });
+                const job = await res.json();
+
+                // Generate script
+                btn.innerHTML = '<span class="loading"></span>Generiere Script...';
+                await fetch(`/api/v1/jobs/${job.id}/script/generate`, { method: 'POST' });
+
+                // Switch to jobs tab and show detail
+                document.querySelector('[data-tab="jobs"]').click();
+                currentJobId = job.id;
+                await loadJobs();
+                showJobDetail(job.id);
+
+                document.getElementById('briefing').value = '';
+            } catch (e) {
+                alert('Fehler: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '🚀 Job erstellen & Script generieren';
+            }
+        }
+
+        // Load jobs list
+        async function loadJobs() {
+            try {
+                const res = await fetch('/api/v1/jobs');
+                const data = await res.json();
+
+                const list = document.getElementById('jobs-list');
+
+                if (data.jobs.length === 0) {
+                    list.innerHTML = '<div class="empty-state">Keine Jobs vorhanden</div>';
+                    return;
+                }
+
+                list.innerHTML = data.jobs.map(job => `
+                    <div class="job-item ${job.id === currentJobId ? 'selected' : ''}" onclick="showJobDetail('${job.id}')">
+                        <div class="job-info">
+                            <div class="job-title">${job.title || 'Unbenannt'}</div>
+                            <div class="job-meta">${job.id.slice(0, 8)} · ${new Date(job.created_at).toLocaleString('de-DE')}</div>
+                        </div>
+                        <span class="job-status status-${job.status}">${formatStatus(job.status)}</span>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error('Load jobs failed:', e);
+            }
+        }
+
+        // Show job detail
+        async function showJobDetail(jobId) {
+            currentJobId = jobId;
+
+            // Update selection
+            document.querySelectorAll('.job-item').forEach(item => {
+                item.classList.toggle('selected', item.onclick.toString().includes(jobId));
+            });
+
+            const detail = document.getElementById('job-detail');
+            const content = document.getElementById('detail-content');
+            detail.classList.remove('hidden');
+            content.innerHTML = '<span class="loading"></span>Laden...';
+
+            try {
+                const res = await fetch(`/api/v1/jobs/${jobId}`);
+                const job = await res.json();
+
+                document.getElementById('detail-title').textContent = job.title || 'Job Details';
+
+                let html = `
+                    <p><strong>Status:</strong> <span class="job-status status-${job.status}">${formatStatus(job.status)}</span></p>
+                    <p><strong>Dauer:</strong> ${job.total_duration_sec}s · ${job.scenes.length} Szenen</p>
+                `;
+
+                if (job.scenes.length > 0) {
+                    html += '<div class="scene-list">';
+                    job.scenes.forEach(scene => {
+                        html += `
+                            <div class="scene-item">
+                                <div class="scene-header">
+                                    <span class="scene-num">Szene ${scene.order}</span>
+                                    <span class="scene-duration">${scene.duration_sec}s</span>
+                                </div>
+                                <div class="scene-details">
+                                    📍 ${scene.location_key.replace(/_/g, ' ')} ·
+                                    📷 ${scene.camera_key.replace(/_/g, ' ')} ·
+                                    🎬 ${scene.action_key.replace(/_/g, ' ')}
+                                    ${scene.needs_lipsync ? ' · 👄 Lipsync' : ''}
+                                </div>
+                                ${scene.voiceover_de ? `<div class="scene-voiceover">🎙 "${scene.voiceover_de}"</div>` : ''}
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                }
+
+                // Action buttons based on status
+                html += '<div class="btn-group">';
+
+                if (job.status === 'script_pending_review') {
+                    html += `
+                        <button class="btn btn-success" onclick="approveScript('${job.id}')">✅ Script freigeben</button>
+                        <button class="btn btn-secondary" onclick="regenerateScript('${job.id}')">🔄 Neu generieren</button>
+                    `;
+                } else if (job.status === 'final_pending_review') {
+                    html += `
+                        <button class="btn btn-success" onclick="approveFinal('${job.id}')">✅ Video freigeben</button>
+                        <a href="/api/v1/jobs/${job.id}/final.mp4" class="btn btn-primary" download>⬇️ Download</a>
+                    `;
+                } else if (job.status === 'completed') {
+                    html += `
+                        <a href="/api/v1/jobs/${job.id}/final.mp4" class="btn btn-primary" download>⬇️ Video herunterladen</a>
+                    `;
+                } else if (['video_rendering', 'audio_rendering', 'lipsync_running', 'assembly_running', 'script_approved'].includes(job.status)) {
+                    html += `<button class="btn btn-secondary" disabled><span class="loading"></span>Rendering...</button>`;
+                    startPolling(job.id);
+                }
+
+                if (!['completed', 'cancelled', 'failed'].includes(job.status)) {
+                    html += `<button class="btn btn-danger" onclick="cancelJob('${job.id}')">❌ Abbrechen</button>`;
+                }
+
+                html += '</div>';
+
+                // Video preview for completed/final_pending_review
+                if (['completed', 'final_pending_review'].includes(job.status)) {
+                    html += `
+                        <div class="video-preview">
+                            <video controls src="/api/v1/jobs/${job.id}/final.mp4"></video>
+                        </div>
+                    `;
+                }
+
+                content.innerHTML = html;
+            } catch (e) {
+                content.innerHTML = '<p style="color: #f87171;">Fehler beim Laden</p>';
+            }
+        }
+
+        // Approve script
+        async function approveScript(jobId) {
+            try {
+                await fetch(`/api/v1/jobs/${jobId}/script/approve`, { method: 'POST' });
+                showJobDetail(jobId);
+                startPolling(jobId);
+            } catch (e) {
+                alert('Fehler: ' + e.message);
+            }
+        }
+
+        // Regenerate script
+        async function regenerateScript(jobId) {
+            const content = document.getElementById('detail-content');
+            content.innerHTML = '<span class="loading"></span>Generiere neues Script...';
+
+            try {
+                await fetch(`/api/v1/jobs/${jobId}/script/regenerate`, { method: 'POST' });
+                showJobDetail(jobId);
+            } catch (e) {
+                alert('Fehler: ' + e.message);
+                showJobDetail(jobId);
+            }
+        }
+
+        // Approve final
+        async function approveFinal(jobId) {
+            try {
+                await fetch(`/api/v1/jobs/${jobId}/final/approve`, { method: 'POST' });
+                showJobDetail(jobId);
+                loadJobs();
+            } catch (e) {
+                alert('Fehler: ' + e.message);
+            }
+        }
+
+        // Cancel job
+        async function cancelJob(jobId) {
+            if (!confirm('Job wirklich abbrechen?')) return;
+
+            try {
+                await fetch(`/api/v1/jobs/${jobId}`, { method: 'DELETE' });
+                stopPolling();
+                loadJobs();
+                document.getElementById('job-detail').classList.add('hidden');
+                currentJobId = null;
+            } catch (e) {
+                alert('Fehler: ' + e.message);
+            }
+        }
+
+        // Polling for render status
+        function startPolling(jobId) {
+            stopPolling();
+            pollInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(`/api/v1/jobs/${jobId}`);
+                    const job = await res.json();
+
+                    if (['completed', 'failed', 'cancelled', 'final_pending_review'].includes(job.status)) {
+                        stopPolling();
+                        showJobDetail(jobId);
+                        loadJobs();
+                    }
+                } catch (e) {
+                    console.error('Poll error:', e);
+                }
+            }, 2000);
+        }
+
+        function stopPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+            }
+        }
+
+        // Format status
+        function formatStatus(status) {
+            const map = {
+                'briefing_received': '📝 Briefing',
+                'script_generating': '🤖 Generiert...',
+                'script_pending_review': '📋 Review',
+                'script_approved': '✅ Genehmigt',
+                'stills_selecting': '🖼️ Stills...',
+                'video_rendering': '🎬 Rendering...',
+                'audio_rendering': '🎙️ Audio...',
+                'lipsync_running': '👄 Lipsync...',
+                'assembly_running': '🔧 Assembly...',
+                'final_pending_review': '👀 Final Review',
+                'completed': '🎉 Fertig',
+                'failed': '❌ Fehler',
+                'cancelled': '🚫 Abgebrochen'
+            };
+            return map[status] || status;
+        }
+
+        // Init
+        checkApi();
+        setInterval(checkApi, 30000);
+    </script>
+</body>
+</html>

@@ -46,6 +46,8 @@ services:
       context: .
       dockerfile: Dockerfile
     command: python -m app.bot.main
+    profiles:
+      - telegram
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_ADMIN_USER_IDS=${TELEGRAM_ADMIN_USER_IDS:-}
