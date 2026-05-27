@@ -60,13 +60,15 @@ async def update_scene_status(
             detail=f"Scene not found: job={job_id}, order={scene_order}",
         )
 
-    await crud.update_scene_status(session, scene.id, update.status)
+    # Convert string to enum if needed
+    status_enum = SceneStatus(update.status) if isinstance(update.status, str) else update.status
+    await crud.update_scene_status(session, scene.id, status_enum)
 
     logger.info(
         "Scene status updated",
         job_id=job_id,
         scene_order=scene_order,
-        status=update.status.value,
+        status=update.status,
     )
 
     return {"status": "ok"}

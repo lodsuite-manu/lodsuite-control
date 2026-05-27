@@ -5,8 +5,6 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from app.db.models import JobMode, JobStatus, SceneStatus
-
 
 class SceneVariantResponse(BaseModel):
     """Response schema for scene variant."""
@@ -40,7 +38,7 @@ class SceneResponse(BaseModel):
     caption_position: str
     variant_count: int
     seed: Optional[int] = None
-    status: SceneStatus
+    status: str
     selected_variant_idx: Optional[int] = None
     variants: list[SceneVariantResponse] = Field(default_factory=list)
 
@@ -54,8 +52,8 @@ class JobResponse(BaseModel):
     id: str
     telegram_user_id: int
     telegram_chat_id: int
-    status: JobStatus
-    mode: JobMode
+    status: str
+    mode: str
     briefing: str
     title: Optional[str] = None
     total_duration_sec: float
@@ -76,7 +74,7 @@ class JobCreateRequest(BaseModel):
     telegram_user_id: int
     telegram_chat_id: int
     briefing: str = ""
-    mode: JobMode = JobMode.BRIEF
+    mode: str = "brief"
     character_key: str = "markus_industrial"
 
 
@@ -90,7 +88,7 @@ class JobListResponse(BaseModel):
 class SceneStatusUpdate(BaseModel):
     """Request schema for updating scene status."""
 
-    status: SceneStatus
+    status: str
     error_message: Optional[str] = None
 
 

@@ -16,16 +16,19 @@ async def create_job(
     telegram_user_id: int,
     telegram_chat_id: int,
     briefing: str = "",
-    mode: JobMode = JobMode.BRIEF,
+    mode: str = "brief",
     character_key: str = "markus_industrial",
 ) -> Job:
     """Create a new job."""
+    # Handle both enum and string mode
+    mode_value = mode.value if hasattr(mode, 'value') else mode
+
     job = Job(
         id=str(uuid.uuid4()),
         telegram_user_id=telegram_user_id,
         telegram_chat_id=telegram_chat_id,
         briefing=briefing,
-        mode=mode.value,
+        mode=mode_value,
         status=JobStatus.BRIEFING_RECEIVED.value,
         character_key=character_key,
         created_at=datetime.utcnow(),

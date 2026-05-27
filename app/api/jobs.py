@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import get_settings
 from app.db import crud
 from app.db.database import get_session
-from app.db.models import JobMode, JobStatus, SceneStatus
+from app.db.models import JobStatus, SceneStatus
 from app.schemas.job import JobCreateRequest, JobListResponse, JobResponse
 from app.schemas.script import Script, ScriptGenerationRequest
 from app.services.script_generator import generate_script
