@@ -70,7 +70,7 @@ async def get_jobs_by_user(
         .where(Job.telegram_user_id == telegram_user_id)
         .order_by(Job.created_at.desc())
         .limit(limit)
-        .options(selectinload(Job.scenes))
+        .options(selectinload(Job.scenes).selectinload(Scene.variants))
     )
     return list(result.scalars().all())
 
@@ -81,7 +81,7 @@ async def get_all_jobs(session: AsyncSession, limit: int = 100) -> list[Job]:
         select(Job)
         .order_by(Job.created_at.desc())
         .limit(limit)
-        .options(selectinload(Job.scenes))
+        .options(selectinload(Job.scenes).selectinload(Scene.variants))
     )
     return list(result.scalars().all())
 
