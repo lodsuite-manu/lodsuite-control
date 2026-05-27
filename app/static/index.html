@@ -434,6 +434,7 @@
         <div class="tabs">
             <button class="tab active" data-tab="create">Neuer Job</button>
             <button class="tab" data-tab="jobs">Jobs</button>
+            <button class="tab" data-tab="characters">Characters</button>
             <button class="tab" data-tab="library">Library</button>
         </div>
 
@@ -494,6 +495,47 @@ Beispiel: Software fuer Maschinenwartung. Zielgruppe: KMU-Geschaeftsfuehrer in d
             <div id="job-detail" class="card hidden">
                 <h2 id="detail-title">Job Details</h2>
                 <div id="detail-content"></div>
+            </div>
+        </div>
+
+        <!-- Characters Tab -->
+        <div id="tab-characters" class="tab-content hidden">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2>Characters</h2>
+                    <button class="btn btn-primary" onclick="showCreateCharacter()">+ Neuer Character</button>
+                </div>
+                <div id="characters-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-top: 16px;">
+                    <div class="empty-state">Keine Characters vorhanden</div>
+                </div>
+            </div>
+
+            <!-- Create Character Form -->
+            <div id="create-character-form" class="card hidden">
+                <h2>Neuer Character</h2>
+                <form id="character-form" onsubmit="createCharacter(event)">
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 8px; color: #888;">Name *</label>
+                        <input type="text" id="char-name" required placeholder="z.B. Markus Industrial">
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 8px; color: #888;">Key (optional)</label>
+                        <input type="text" id="char-key" placeholder="z.B. markus_industrial (auto-generiert wenn leer)">
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 8px; color: #888;">Beschreibung</label>
+                        <textarea id="char-description" rows="2" placeholder="Kurze Beschreibung des Characters..."></textarea>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 8px; color: #888;">Avatar Bild * (PNG/JPG)</label>
+                        <input type="file" id="char-image" accept="image/*" required style="padding: 8px;">
+                        <div id="image-preview" style="margin-top: 8px;"></div>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-success">Character erstellen</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideCreateCharacter()">Abbrechen</button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -565,6 +607,8 @@ scenes:
 
                 if (tab.dataset.tab === 'jobs') {
                     loadJobs();
+                } else if (tab.dataset.tab === 'characters') {
+                    loadCharacters();
                 } else if (tab.dataset.tab === 'library') {
                     loadLibrary();
                 }
@@ -987,6 +1031,103 @@ scenes:
                 'cancelled': 'Abgebrochen'
             };
             return map[status] || status;
+        }
+
+        // ==================== CHARACTERS ====================
+
+        async function loadCharacters() {
+            try {
+                const res = await fetch('/api/v1/characters');
+                const data = await res.json();
+
+                const list = document.getElementById('characters-list');
+
+                if (data.characters.length === 0) {
+                    list.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">Keine Characters vorhanden. Erstelle deinen ersten Character!</div>';
+                    return;
+                }
+
+                list.innerHTML = data.characters.map(char => `
+                    <div class="character-card" style="background: #0f0f0f; border: 1px solid #333; border-radius: 8px; overflow: hidden; cursor: pointer;" onclick="selectCharacter('${char.key}')">
+                        <img src="${char.image_url}" alt="${char.name}" style="width: 100%; height: 200px; object-fit: cover;">
+                        <div style="padding: 12px;">
+                            <div style="font-weight: 500; margin-bottom: 4px;">${char.name}</div>
+                            <div style="font-size: 12px; color: #888;">${char.key}</div>
+                            ${char.description ? `<div style="font-size: 12px; color: #666; margin-top: 8px;">${char.description}</div>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error('Load characters failed:', e);
+                document.getElementById('characters-list').innerHTML = '<p style="color: #f87171;">Fehler beim Laden</p>';
+            }
+        }
+
+        function showCreateCharacter() {
+            document.getElementById('create-character-form').classList.remove('hidden');
+        }
+
+        function hideCreateCharacter() {
+            document.getElementById('create-character-form').classList.add('hidden');
+            document.getElementById('character-form').reset();
+            document.getElementById('image-preview').innerHTML = '';
+        }
+
+        // Image preview
+        document.getElementById('char-image')?.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('image-preview').innerHTML = `
+                        <img src="${e.target.result}" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid #333;">
+                    `;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        async function createCharacter(e) {
+            e.preventDefault();
+
+            const form = document.getElementById('character-form');
+            const formData = new FormData();
+
+            formData.append('name', document.getElementById('char-name').value);
+            formData.append('key', document.getElementById('char-key').value || '');
+            formData.append('description', document.getElementById('char-description').value || '');
+            formData.append('image', document.getElementById('char-image').files[0]);
+
+            const btn = form.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span>Erstelle...';
+
+            try {
+                const res = await fetch('/api/v1/characters', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Fehler beim Erstellen');
+                }
+
+                hideCreateCharacter();
+                loadCharacters();
+            } catch (e) {
+                alert('Fehler: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Character erstellen';
+            }
+        }
+
+        function selectCharacter(key) {
+            // Copy key to clipboard and show notification
+            navigator.clipboard.writeText(key).then(() => {
+                alert(`Character Key "${key}" kopiert! Verwende ihn im YAML Script als:\ncharacter: "${key}"`);
+            });
         }
 
         // Init

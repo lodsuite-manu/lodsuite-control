@@ -167,3 +167,26 @@ class SceneVariant(Base):
 
     # Relationships
     scene: Mapped["Scene"] = relationship(back_populates="variants")
+
+
+class Character(Base):
+    """Character/Avatar for video generation."""
+
+    __tablename__ = "characters"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    key: Mapped[str] = mapped_column(String(100), unique=True)  # e.g. "markus_industrial"
+    name: Mapped[str] = mapped_column(String(255))  # Display name
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Image paths
+    image_path: Mapped[str] = mapped_column(String(500))  # Main character image
+    thumbnail_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
+    # Voice settings (for F5-TTS)
+    voice_reference_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    voice_language: Mapped[str] = mapped_column(String(10), default="de")
+
+    # Metadata
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    is_active: Mapped[bool] = mapped_column(default=True)
