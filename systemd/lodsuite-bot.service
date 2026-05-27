@@ -1,0 +1,26 @@
+[Unit]
+Description=Lodsuite Telegram Bot (standalone)
+Documentation=https://github.com/lodsuite/lodsuite-control
+After=network.target lodsuite-api.service
+Requires=lodsuite-api.service
+
+[Service]
+Type=simple
+User=lodsuite
+WorkingDirectory=/var/projects/lodsuite/lodsuite-control
+Environment=PATH=/var/projects/lodsuite/lodsuite-control/.venv/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/var/projects/lodsuite/lodsuite-control/.venv/bin/python -m app.bot.main
+Restart=always
+RestartSec=5
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=lodsuite-bot
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

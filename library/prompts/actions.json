@@ -1,0 +1,46 @@
+{
+  "talking_to_camera_confident": {
+    "prompt": "talking confidently to camera, gesturing naturally with hands",
+    "needs_lipsync": true
+  },
+  "pointing_at_screen": {
+    "prompt": "pointing at computer screen or display, explaining",
+    "needs_lipsync": true
+  },
+  "walking_explaining": {
+    "prompt": "walking through space while explaining, looking at camera occasionally",
+    "needs_lipsync": true
+  },
+  "demonstrating": {
+    "prompt": "demonstrating product or process, showing how something works",
+    "needs_lipsync": true
+  },
+  "showing_product": {
+    "prompt": "holding and showing product to camera, rotating it, highlighting features",
+    "needs_lipsync": false
+  },
+  "working_at_desk": {
+    "prompt": "working at desk, typing, looking at monitor, professional office work",
+    "needs_lipsync": false
+  },
+  "reacting": {
+    "prompt": "reacting with facial expressions, showing surprise or satisfaction",
+    "needs_lipsync": false
+  },
+  "walking_through_space": {
+    "prompt": "walking purposefully through space, confident stride, business walk",
+    "needs_lipsync": false
+  },
+  "entering_room": {
+    "prompt": "entering room or space, opening door, stepping inside",
+    "needs_lipsync": false
+  },
+  "typing": {
+    "prompt": "typing on keyboard, focused on work, professional",
+    "needs_lipsync": false
+  },
+  "touring": {
+    "prompt": "giving tour of facility or workspace, gesturing at surroundings",
+    "needs_lipsync": true
+  }
+}

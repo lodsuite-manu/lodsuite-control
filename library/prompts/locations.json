@@ -1,0 +1,42 @@
+{
+  "warehouse_modern": {
+    "prompt": "modern logistics warehouse, tall shelving with pallets, polished concrete, LED lighting",
+    "tags": ["industrial", "indoor", "spacious"]
+  },
+  "cnc_hall": {
+    "prompt": "CNC milling production hall, metal chips on floor, industrial green machinery",
+    "tags": ["industrial", "indoor", "manufacturing"]
+  },
+  "office_glass_wall": {
+    "prompt": "modern office with glass wall, city view, minimal furniture, standing desk",
+    "tags": ["corporate", "indoor"]
+  },
+  "outdoor_loading_dock": {
+    "prompt": "outdoor loading dock, semi-trucks, industrial complex, overcast sky",
+    "tags": ["industrial", "outdoor"]
+  },
+  "server_room": {
+    "prompt": "data center server room, blue LED lighting, rows of server racks, cooling vents",
+    "tags": ["tech", "indoor", "corporate"]
+  },
+  "factory_floor": {
+    "prompt": "factory production floor, assembly line, industrial robots, safety markings on floor",
+    "tags": ["industrial", "indoor", "manufacturing"]
+  },
+  "meeting_room": {
+    "prompt": "corporate meeting room, large screen, conference table, modern lighting",
+    "tags": ["corporate", "indoor"]
+  },
+  "workshop_bench": {
+    "prompt": "industrial workshop, metal workbench with tools, organized tool wall, good lighting",
+    "tags": ["industrial", "indoor", "manufacturing"]
+  },
+  "quality_control": {
+    "prompt": "quality control area, measurement instruments, white clean room, inspection station",
+    "tags": ["industrial", "indoor", "manufacturing"]
+  },
+  "shipping_area": {
+    "prompt": "shipping and receiving area, cardboard boxes, pallet jacks, industrial shelving",
+    "tags": ["industrial", "indoor", "logistics"]
+  }
+}

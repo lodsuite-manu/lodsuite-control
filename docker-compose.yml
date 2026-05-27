@@ -1,0 +1,79 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./data/lodsuite.db
+      - JOBS_DIR=/app/jobs
+      - LIBRARY_DIR=/app/library
+      - CHARACTERS_DIR=/app/characters
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./jobs:/app/jobs
+      - ./library:/app/library
+      - ./characters:/app/characters
+      - db_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  bot:
+    build: .
+    command: python -m app.bot.main
+    env_file: .env
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./data/lodsuite.db
+      - JOBS_DIR=/app/jobs
+      - LIBRARY_DIR=/app/library
+      - CHARACTERS_DIR=/app/characters
+    depends_on:
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    volumes:
+      - ./jobs:/app/jobs
+      - ./library:/app/library
+      - ./characters:/app/characters
+      - db_data:/app/data
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: rq worker default --with-scheduler
+    env_file: .env
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./data/lodsuite.db
+      - JOBS_DIR=/app/jobs
+      - LIBRARY_DIR=/app/library
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./jobs:/app/jobs
+      - ./library:/app/library
+      - db_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  db_data:

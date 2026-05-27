@@ -1,0 +1,25 @@
+[Unit]
+Description=Lodsuite Control Plane API (standalone)
+Documentation=https://github.com/lodsuite/lodsuite-control
+After=network.target
+
+[Service]
+Type=simple
+User=lodsuite
+WorkingDirectory=/var/projects/lodsuite/lodsuite-control
+Environment=PATH=/var/projects/lodsuite/lodsuite-control/.venv/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/var/projects/lodsuite/lodsuite-control/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=5
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=lodsuite-api
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

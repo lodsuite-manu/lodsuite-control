@@ -1,0 +1,27 @@
+[Unit]
+Description=Lodsuite Control Plane
+Documentation=https://github.com/lodsuite/lodsuite-control
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/projects/lodsuite/lodsuite-control
+ExecStartPre=/usr/bin/docker compose pull
+ExecStart=/usr/bin/docker compose up --remove-orphans
+ExecStop=/usr/bin/docker compose down
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=lodsuite-control
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

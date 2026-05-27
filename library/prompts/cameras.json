@@ -1,0 +1,34 @@
+{
+  "selfie_pov_arm_visible": {
+    "prompt": "selfie POV shot, arm visible holding phone, slight wide angle lens, vlog style",
+    "compatible_actions": ["talking_to_camera_confident", "walking_explaining", "showing_product"]
+  },
+  "selfie_pov_close": {
+    "prompt": "close selfie POV, face prominently visible, intimate framing, personal vlog feel",
+    "compatible_actions": ["talking_to_camera_confident", "reacting"]
+  },
+  "medium_shot": {
+    "prompt": "medium shot, waist up, professional framing",
+    "compatible_actions": ["pointing_at_screen", "talking_to_camera_confident", "demonstrating"]
+  },
+  "walking_shot": {
+    "prompt": "tracking shot following subject walking, smooth motion",
+    "compatible_actions": ["walking_explaining", "walking_through_space"]
+  },
+  "over_shoulder": {
+    "prompt": "over the shoulder shot, looking at screen or document, professional angle",
+    "compatible_actions": ["pointing_at_screen", "working_at_desk"]
+  },
+  "wide_establishing": {
+    "prompt": "wide establishing shot, full body visible, shows environment context",
+    "compatible_actions": ["walking_through_space", "entering_room"]
+  },
+  "close_up_hands": {
+    "prompt": "close up shot of hands, detail work visible, professional product shot style",
+    "compatible_actions": ["demonstrating", "showing_product", "typing"]
+  },
+  "dynamic_handheld": {
+    "prompt": "dynamic handheld shot, slight movement, energetic feel, documentary style",
+    "compatible_actions": ["walking_explaining", "demonstrating", "touring"]
+  }
+}
