@@ -71,6 +71,54 @@ async def update_scene_status(
         status=update.status,
     )
 
+    # Check if all scenes are ready - if so, advance job status
+    if status_enum == SceneStatus.READY:
+        job = await crud.get_job(session, job_id)
+        if job:
+            all_ready = all(s.status == SceneStatus.READY.value for s in job.scenes)
+            if all_ready and job.status in [
+                JobStatus.SCRIPT_APPROVED.value,
+                JobStatus.VIDEO_RENDERING.value,
+            ]:
+                # All scenes rendered - create final video placeholder and advance to review
+                # TODO: Real assembly with FFmpeg when audio/lipsync are implemented
+                settings = get_settings()
+                job_dir = settings.jobs_dir / job_id
+                job_dir.mkdir(parents=True, exist_ok=True)
+
+                final_path = job_dir / "final.mp4"
+
+                # Concatenate all scene variants into final video
+                # For now, just use first variant of each scene
+                scene_videos = []
+                for s in sorted(job.scenes, key=lambda x: x.order):
+                    if s.variants:
+                        scene_videos.append(s.variants[0].video_path)
+
+                if scene_videos:
+                    # Create concat file for FFmpeg
+                    concat_file = job_dir / "concat.txt"
+                    with open(concat_file, "w") as f:
+                        for video in scene_videos:
+                            f.write(f"file '{video}'\n")
+
+                    # Concatenate videos
+                    try:
+                        subprocess.run([
+                            "ffmpeg", "-y",
+                            "-f", "concat",
+                            "-safe", "0",
+                            "-i", str(concat_file),
+                            "-c", "copy",
+                            str(final_path),
+                        ], check=True, capture_output=True)
+                        logger.info("Final video assembled", job_id=job_id)
+                    except subprocess.CalledProcessError as e:
+                        logger.error("FFmpeg concat failed", error=e.stderr.decode() if e.stderr else str(e))
+
+                await crud.update_job_status(session, job_id, JobStatus.FINAL_PENDING_REVIEW)
+                logger.info("Job advanced to final review", job_id=job_id)
+
     return {"status": "ok"}
 
 
