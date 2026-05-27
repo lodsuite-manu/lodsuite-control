@@ -42,7 +42,7 @@ async def create_job(
         "Job created",
         job_id=job.id,
         user_id=request.telegram_user_id,
-        mode=request.mode.value,
+        mode=request.mode,
     )
 
     return JobResponse.model_validate(job)
