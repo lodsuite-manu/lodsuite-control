@@ -45,6 +45,8 @@ async def create_job(
         mode=request.mode,
     )
 
+    # Re-fetch with eager loading to avoid lazy load issues
+    job = await crud.get_job(session, job.id)
     return JobResponse.model_validate(job)
 
 
