@@ -1,8 +1,6 @@
 services:
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -10,70 +8,67 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
-    env_file: .env
     environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_ADMIN_USER_IDS=${TELEGRAM_ADMIN_USER_IDS:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - DATABASE_URL=sqlite+aiosqlite:///./data/lodsuite.db
+      - REDIS_URL=redis://redis:6379
       - JOBS_DIR=/app/jobs
       - LIBRARY_DIR=/app/library
       - CHARACTERS_DIR=/app/characters
+      - MOCK_RENDER=${MOCK_RENDER:-true}
+      - MOCK_SCRIPT=${MOCK_SCRIPT:-true}
     depends_on:
       redis:
         condition: service_healthy
     volumes:
-      - ./jobs:/app/jobs
-      - ./library:/app/library
-      - ./characters:/app/characters
-      - db_data:/app/data
+      - app_data:/app/data
+      - app_jobs:/app/jobs
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health').raise_for_status()"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 10s
     restart: unless-stopped
 
   bot:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: python -m app.bot.main
-    env_file: .env
     environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_ADMIN_USER_IDS=${TELEGRAM_ADMIN_USER_IDS:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - DATABASE_URL=sqlite+aiosqlite:///./data/lodsuite.db
+      - REDIS_URL=redis://redis:6379
       - JOBS_DIR=/app/jobs
       - LIBRARY_DIR=/app/library
       - CHARACTERS_DIR=/app/characters
+      - MOCK_RENDER=${MOCK_RENDER:-true}
+      - MOCK_SCRIPT=${MOCK_SCRIPT:-true}
+      - API_BASE_URL=http://api:8000
     depends_on:
       redis:
         condition: service_healthy
       api:
         condition: service_healthy
     volumes:
-      - ./jobs:/app/jobs
-      - ./library:/app/library
-      - ./characters:/app/characters
-      - db_data:/app/data
-    restart: unless-stopped
-
-  worker:
-    build: .
-    command: rq worker default --with-scheduler
-    env_file: .env
-    environment:
-      - DATABASE_URL=sqlite+aiosqlite:///./data/lodsuite.db
-      - JOBS_DIR=/app/jobs
-      - LIBRARY_DIR=/app/library
-    depends_on:
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./jobs:/app/jobs
-      - ./library:/app/library
-      - db_data:/app/data
+      - app_data:/app/data
+      - app_jobs:/app/jobs
     restart: unless-stopped
 
 volumes:
   redis_data:
-  db_data:
+  app_data:
+  app_jobs:
